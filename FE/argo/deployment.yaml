@@ -28,6 +28,8 @@ spec:
           env:
             - name: APP_VERSION
               valueFrom: { configMapKeyRef: { name: pic-uploader, key: APP_VERSION } }
+            - name: SecretName
+              valueFrom: { secretKeyRef: { name: pic-uploader, key: myname } }
           securityContext:
             runAsNonRoot: true  # Ensures the container does not run as root
             allowPrivilegeEscalation: false  # Prevent privilege escalation
