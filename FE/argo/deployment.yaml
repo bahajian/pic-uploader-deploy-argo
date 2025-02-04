@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pic-uploader
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pic-uploader
+  namespace: pic-uploader
+  labels:
+    app: pic-uploader
+spec:
+  replicas: 1  # Change this based on your need
+  selector:
+    matchLabels:
+      app: pic-uploader
+  template:
+    metadata:
+      labels:
+        app: pic-uploader
+    spec:
+      containers:
+        - name: pic-uploader
+          image: bahajian/pic-uploader:latest  # Update with your image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: pic-uploader, key: APP_VERSION } }
+          securityContext:
+            runAsNonRoot: true  # Ensures the container does not run as root
+            allowPrivilegeEscalation: false  # Prevent privilege escalation
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pic-uploader
+  namespace: pic-uploader
+spec:
+  selector:
+    app: pic-uploader
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pic-uploader
+  namespace: pic-uploader
+spec:
+  to:
+    kind: Service
+    name: pic-uploader
+  port:
+    targetPort: 8080
+  tls:  # Optional, remove if you don't need HTTPS
+    termination: edge
+  wildcardPolicy: None
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pic-uploader
+  namespace: pic-uploader
+data:
+  APP_VERSION: "v0.0.1"
